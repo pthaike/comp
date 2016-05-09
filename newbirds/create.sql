@@ -87,9 +87,9 @@ create table config(
 -- 	target
 -- );
 
-LOAD DATA LOCAL INFILE 'item_feature1.csv' INTO TABLE item_feature FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
-LOAD DATA LOCAL INFILE 'item_store_feature1.csv' INTO TABLE item_store_feature FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
-LOAD DATA LOCAL INFILE 'config1.csv' INTO TABLE config FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
+LOAD DATA LOCAL INFILE 'item_feature2.csv' INTO TABLE item_feature FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
+LOAD DATA LOCAL INFILE 'item_store_feature2.csv' INTO TABLE item_store_feature FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
+LOAD DATA LOCAL INFILE 'config2.csv' INTO TABLE config FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n';
 
 select date, count(*) from item_store_feature where item_id = '84923' group by date;
 
@@ -118,7 +118,7 @@ select date, qty_alipay from item_feature where item_id = '79276';
 
  select distinct item_id from config;
 
- select distinct item_id from config into outfile '/tmp/item.csv' fields terminated by ',' optionally enclosed by '"' escaped by '"' lines terminated by '\n'; 
+ select distinct item_id from config into outfile '/tmp/item2.csv' fields terminated by ',' optionally enclosed by '"' escaped by '"' lines terminated by '\n'; 
 
 
  select date, item_id, pv_ipv from item_feature; 

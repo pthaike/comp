@@ -11,7 +11,7 @@ import time
 
 # get artist list
 def getitem():
-	file = 'item.csv'
+	file = 'item2.csv'
 	name = pd.read_csv(file, header=None, names = ['id'])
 	return name
 
@@ -107,7 +107,7 @@ def getseq(tag):
 	return dat
 
 def getweight():
-	file = 'config1.csv'
+	file = 'config2.csv'
 	dat = pd.read_csv(file, header=None, names = ['id', 'store', 'weight'])
 	dict = {}
 	for i in dat.index:
@@ -220,7 +220,7 @@ def clean(seq):
 	return 0,s
 
 def getfromcsv():
-	file = 'item_feature1.csv'
+	file = 'item_feature2.csv'
 	csvdat = pd.read_csv(file, header = None, names = [
 		'date',
 		'item_id',
@@ -279,7 +279,7 @@ def getfromcsv():
 
 	csvdat.date = pd.to_datetime(csvdat.date,format='%Y%m%d')
 	for i in range(len(csvdat.index)):
-		print i
+		print i/float(len(csvdat.index))
 		d = (csvdat.loc[i, 'date']-start).days
 		item_id =  csvdat.loc[i, 'item_id']
 		res_qty_alipay_njhs.loc[item_id, d] = csvdat.loc[i, 'qty_alipay_njhs']
@@ -323,7 +323,7 @@ def getfromcsv():
 
 
 def getstorefromcsv():
-	file = 'item_store_feature1.csv'
+	file = 'item_store_feature2.csv'
 	csvdat = pd.read_csv(file, header = None, names = [
 		'date',
 		'item_id',
@@ -382,7 +382,7 @@ def getstorefromcsv():
 
 	csvdat.date = pd.to_datetime(csvdat.date,format='%Y%m%d')
 	for i in range(len(csvdat.index)):
-		print i
+		print i/float(len(csvdat.index))
 		d = (csvdat.loc[i, 'date']-start).days
 		item_id =  csvdat.loc[i, 'item_id']
 		store_code = csvdat.loc[i, 'store_code']-1
@@ -467,7 +467,7 @@ def avgmutilclean(dat,avg):
 	if len(s1)<=28+avg+1:
 		return -1,s1
 	sl = s1[len(s1)-21:len(s1)]
-	# return -2,s1[len(s1)-10-1:len(s1)]
+	return -2,s1[len(s1)-10-1:len(s1)]
 	if len(sl[sl>0])<7:
 		return -2,s1[len(s1)-14-1:len(s1)]
 	# set missing data to zero
@@ -504,6 +504,7 @@ def mutilgemfeature(dat, step, ahead):
 	for k in range(1,length):
 		x[0, k*step:(k+1)*step] = dat[k][len(dat[k])-step:len(dat[k])]
 	return res,x
+
 
 def mutilgetith(dat, pid):
 	res = []
@@ -555,7 +556,7 @@ if __name__ == '__main__':
 	# getstorebrow()
 	getfromcsv()
 	# getstorefromcsv()
-
+	
 	# pdb.set_trace()
 	# dat = getseq('all')
 	# seq = getith(dat,33796)
