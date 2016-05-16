@@ -1,0 +1,122 @@
+#! /usr/bin/python
+# encoding: utf-8
+
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.cross_validation import train_test_split
+import matplotlib.pyplot as plt
+import pdb
+from sklearn import grid_search
+import xgboost as xgb
+from musicpro import *
+import time
+from sklearn.svm import SVR
+
+_submit = True
+# _submit = False
+testnum = 30
+_step = 14
+_ahead = 60
+
+
+def xgbpredict(x, y, x_pre):
+
+	xtrain, xvalid, ytrain, yvalid = train_test_split(x, y, test_size=0.2, random_state=0)
+
+	dtrain = xgb.DMatrix(xtrain, label = ytrain, missing = -1)
+	dvalid = xgb.DMatrix(xvalid, label = yvalid, missing = -1)
+	dpre = xgb.DMatrix(x_pre)
+
+	param = {
+		'booster':'gbtree',
+		'objective':'reg:linear',
+		'early_stopping_rounds':300,
+		'max_depth':6,
+		'subsample':0.7,
+		'silent' : 1,
+		'colssample_bytree':0.8,
+		'eta':0.02,
+		'nthread':10,
+		'seed':200
+	}
+
+	watchlist = [ (dtrain,'train'), (dvalid,'val')]
+	model = xgb.train(param, dtrain, num_boost_round=500, evals=watchlist)
+
+	# model.save_model('xgb.model')
+	print 'predict....'
+	#predict
+	pre_y = model.predict(dpre, ntree_limit=model.best_iteration)
+	# printscore(ytest,pre_y)
+	return pre_y
+
+def score(trust, pre):
+	e = trust - pre
+	summ = 0
+	for i in range(len(trust)):
+		s = (e[i]/trust[i])**2
+		summ = summ + s
+	tho = np.sqrt(summ/len(trust))
+	f = (1-tho)*np.sqrt(sum(trust))
+	return f
+
+def predict(ts, step):
+	if not _submit:
+		aheadnum = testnum
+	else:
+		aheadnum = _ahead
+	prediction = np.zeros(aheadnum)
+	for i in range(aheadnum):
+		x, y, x_pre = genfeature(ts, step+i)
+		m, n = x.shape
+		if not _submit:
+			xtrain = x[0 : m - testnum]
+			ytrain = y[0 : m - testnum]
+			x_pre = x[m - testnum]
+		else:
+			xtrain = x
+			ytrain = y
+		x_pre = np.array([x_pre])
+		pre = xgbpredict(xtrain, ytrain, x_pre)
+		# pdb.set_trace()
+		prediction[i] = pre
+		ts = np.concatenate((ts,pre), axis = 0)
+	if not _submit:
+		yt = y[m - testnum: m].T[0]
+		f = score(yt, prediction)
+		return f
+	else:
+		return prediction
+
+
+
+def submit():
+	art = getartist()
+	daterange = pd.period_range('20150901', '20151030', freq='D')
+	date = [d.strftime('%Y%m%d') for d in daterange]
+	subresult = pd.DataFrame()
+	F = 0
+	count = 0
+	for aid in art.id:
+		d = getdat(aid)
+		pre = predict(d[:, 0], _step)
+		if not _submit:
+			F += pre
+		else:
+			dat = pd.DataFrame([aid]*_ahead, columns = ['id'])
+			dat['pred'] = pre
+			dat['time'] = date
+			subresult = subresult.append(dat)
+		if count == 2:
+			break
+		count += 1
+	print F
+	pdb.set_trace()
+	now = time.strftime('%Y%m%d%H%M%S')
+	if _submit:
+		subresult.to_csv('res/'+now+'.csv', header = False, index = False)
+
+if __name__ == '__main__':
+	submit()
