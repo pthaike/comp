@@ -14,8 +14,8 @@ from musicpro import *
 import time
 from sklearn.svm import SVR
 
+# _submit = True
 _submit = True
-# _submit = False
 testnum = 30
 _step = 14
 _ahead = 60
@@ -62,6 +62,12 @@ def score(trust, pre):
 	f = (1-tho)*np.sqrt(sum(trust))
 	return f
 
+def gbdrtrain(x, y, pre_x):
+	clf = GradientBoostingRegressor(n_estimators=200,max_leaf_nodes =20, learning_rate=0.1,max_depth=6, random_state=400, loss='ls').fit(x, y)
+	pred = clf.predict(pre_x)
+	return pred
+
+
 def predict(ts, step):
 	if not _submit:
 		aheadnum = testnum
@@ -78,9 +84,9 @@ def predict(ts, step):
 		else:
 			xtrain = x
 			ytrain = y
-		x_pre = np.array([x_pre])
-		pre = xgbpredict(xtrain, ytrain, x_pre)
-		# pdb.set_trace()
+		# x_pre = np.array([x_pre])
+		# pre = xgbpredict(xtrain, ytrain, x_pre)
+		pre = gbdrtrain(xtrain, ytrain, x_pre)
 		prediction[i] = pre
 		ts = np.concatenate((ts,pre), axis = 0)
 	if not _submit:
@@ -100,6 +106,7 @@ def submit():
 	F = 0
 	count = 0
 	for aid in art.id:
+		print "===============================================================>",count/float(len(art.id))
 		d = getdat(aid)
 		pre = predict(d[:, 0], _step)
 		if not _submit:
@@ -109,14 +116,13 @@ def submit():
 			dat['pred'] = pre
 			dat['time'] = date
 			subresult = subresult.append(dat)
-		if count == 2:
-			break
 		count += 1
+		# if count == 3:
+		# 	break
 	print F
-	pdb.set_trace()
 	now = time.strftime('%Y%m%d%H%M%S')
 	if _submit:
-		subresult.to_csv('res/'+now+'.csv', header = False, index = False)
+		subresult.to_csv('res/gbrt'+now+'.csv', header = False, index = False)
 
 if __name__ == '__main__':
 	submit()
