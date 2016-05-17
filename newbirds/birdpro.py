@@ -3,7 +3,7 @@
 
 import numpy as np
 import pandas as pd
-import MySQLdb as mdb
+# import MySQLdb as mdb
 from sklearn.ensemble import GradientBoostingRegressor
 import matplotlib.pyplot as plt
 import pdb
@@ -464,9 +464,9 @@ def avgmutilclean(dat,avg):
 	# pdb.set_trace()
 	s1 = dat[0][i:l]
 	s1[s1==-1] = 0
-	if len(s1)<=28+avg+1:
+	if len(s1)<=14+avg+1:
 		return -1,s1
-	sl = s1[len(s1)-21:len(s1)]
+	sl = s1[len(s1)-14:len(s1)]
 	return -2,s1[len(s1)-10-1:len(s1)]
 	if len(sl[sl>0])<7:
 		return -2,s1[len(s1)-14-1:len(s1)]

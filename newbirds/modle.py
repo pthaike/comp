@@ -3,13 +3,13 @@
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble.mygradient import MyGradientBoostingRegressor
+# from sklearn.ensemble.mygradient import MyGradientBoostingRegressor
 # from sklearn.ensemble import RandomForestRegressor
 from sklearn.cross_validation import train_test_split
 import matplotlib.pyplot as plt
 import pdb
 from sklearn import grid_search
-import xgboost as xgb
+# import xgboost as xgb
 from birdpro import *
 import time
 from sklearn.svm import SVR
