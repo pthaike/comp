@@ -17,8 +17,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import SGDRegressor
 from sklearn.ensemble import RandomForestRegressor
 
-# _submit = False
-_submit = True
+_submit = False
+# _submit = True
 testnum = 30
 _step = 28
 _ahead = 60
@@ -35,7 +35,7 @@ def xgbpredict(x, y, pre_x):
 	param = {
 		'booster':'gbtree',
 		'objective':'reg:linear',
-		'early_stopping_rounds':300,
+		'early_stopping_rounds':500,
 		'max_depth':6,
 		'subsample':0.7,
 		'silent' : 1,
@@ -46,7 +46,7 @@ def xgbpredict(x, y, pre_x):
 	}
 
 	watchlist = [ (dtrain,'train'), (dvalid,'val')]
-	model = xgb.train(param, dtrain, num_boost_round=500, evals=watchlist)
+	model = xgb.train(param, dtrain, num_boost_round=1000, evals=watchlist)
 
 	# model.save_model('xgb.model')
 	print 'predict....'
@@ -86,6 +86,7 @@ def svntrain(x, y, pre_x):
 	return pred
 
 def bayesiantrain(x, y, pre_x):
+	x, pre_x = datscater(x, pre_x)
 	clf = linear_model.BayesianRidge().fit(x, y)
 	pred = clf.predict(pre_x)
 	return pred
@@ -107,6 +108,13 @@ def rfrtrain(x, y, pre_x):
 	clf = RandomForestRegressor(n_estimators=300,max_leaf_nodes =20, max_depth=6, random_state=400).fit(x, y)
 	pred = clf.predict(pre_x)
 	return pred
+
+def voting(xtrain, y, x_pre):
+	ytrain = np.ravel(y)
+	pre = 0.2*xgbpredict(xtrain, ytrain, x_pre) + 0.2*svntrain(xtrain, ytrain, x_pre) + 0.1*gbdrtrain(xtrain, ytrain, x_pre) + 0.2*nusvrtrain(xtrain, ytrain, x_pre) + 0.2*rfrtrain(xtrain, ytrain, x_pre) + 0.05*LassoLarstrain(xtrain, ytrain, x_pre) + 0.05*bayesiantrain(xtrain, ytrain, x_pre)
+	return pre
+	
+
 
 def predict(ts, collect, down, step):
 	if not _submit:
@@ -135,19 +143,27 @@ def predict(ts, collect, down, step):
 		#gbdr
 		# ytrain = np.ravel(ytrain)
 		# pre = gbdrtrain(xtrain, ytrain, x_pre)
+		# print "gbdr"
 
 		#svn
-		# ytrain = np.ravel(ytrain)
-		# pre = svntrain(xtrain, ytrain, x_pre)
+		ytrain = np.ravel(ytrain)
+		pre = svntrain(xtrain, ytrain, x_pre)
+		print "svn"
 
 		#nusvr
 		# ytrain = np.ravel(ytrain)
 		# pre = nusvrtrain(xtrain, ytrain, x_pre)
+		# print "nusvr"
 
-		#svn
-		ytrain = np.ravel(ytrain)
-		pre = rfrtrain(xtrain, ytrain, x_pre)
+		#randomforest
+		# ytrain = np.ravel(ytrain)
+		# pre = rfrtrain(xtrain, ytrain, x_pre)
+		# print "rfr"
 		
+		# voting
+		# pre = voting(xtrain, ytrain, x_pre)
+		# print "voting"
+
 		prediction[i] = pre
 		ts = np.concatenate((ts,pre), axis = 0)
 	if not _submit:
@@ -156,6 +172,7 @@ def predict(ts, collect, down, step):
 		return f
 	else:
 		return prediction
+
 
 #only the play feature
 def predict_back(ts, step):
@@ -216,6 +233,7 @@ def submit():
 		count += 1
 		# if count == 3:
 		# 	break
+		print F
 	print F
 	if _submit:
 		now = time.strftime('%Y%m%d%H%M%S')
