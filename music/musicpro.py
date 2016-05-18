@@ -59,7 +59,26 @@ def genfeature(ts, step):
 	x_pre = ts[n-step:n]
 	return x,y,x_pre
 
-
+'''
+add the feature of download and collect
+step: ts before step size
+ostep: down and collect step size
+'''
+def genmutilfeature(ts, down, collect, step, ostep):
+	n = len(ts)
+	ndwon = len(down)
+	ncoll = len(collect)
+	x = np.zeros((n-step, step + 2 * ostep))
+	y = np.zeros((n-step, 1))
+	for i in range(n-step):
+		x[i, 0:step] = ts[i:i+step]
+		x[i, step:step+ostep] = down[i:i+ostep]
+		x[i, step+ostep:step+2*ostep] = collect[i:i+ostep]
+		y[i, 0] = ts[i+step]
+	# pdb.set_trace()
+	x_pre = ts[n-step:n]
+	x_pre = np.concatenate((x_pre, down[ndwon-ostep:ndwon], collect[ncoll-ostep:ncoll]), axis = 0)
+	return x, y, x_pre
 
 
 if __name__ == '__main__':

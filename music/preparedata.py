@@ -27,14 +27,14 @@ def predat(table, artist):
 # topk plays everyday
 def statsplay(topk):
 	artistlist = getartist()
-	daterange = pd.period_range('3/1/2015', '8/1/2015', freq='D')
+	daterange = pd.period_range('3/1/2015', '8/30/2015', freq='D')
 	dat = np.zeros((len(daterange), topk))
 	for id in artistlist.id:
 		artist_id = id
 		print id
 		for i in range(len(daterange)):
 			date = str(daterange[i])
-			sql = 'select songs.song_id as song_is, count(*) as plays from actions, songs where action_type = 2 and ds = "'+date+'" and songs.artist_id = "'+artist_id+'" and actions.song_id = songs.song_id group by songs.song_id order by count(*) desc limit '+ str(topk)
+			sql = 'select songs.song_id as song_is, count(*) as plays from actions, songs where action_type = 1 and ds = "'+date+'" and songs.artist_id = "'+artist_id+'" and actions.song_id = songs.song_id group by songs.song_id order by count(*) desc limit '+ str(topk)
 			con = mdb.connect('localhost', 'sealyn', 'lyn520', 'xiami')
 			with con:
 				data = pd.read_sql(sql = sql, con = con)
@@ -43,7 +43,7 @@ def statsplay(topk):
 				else:
 					dat[i, :] = data.plays
 		df = pd.DataFrame(dat)
-		df.to_csv('dayplay/down/'+id+'.csv', header = False, index = False)
+		df.to_csv('topk/play/'+id+'.csv', header = False, index = False)
 
 
 """ 

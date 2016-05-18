@@ -14,8 +14,8 @@ from musicpro import *
 import time
 from sklearn.svm import SVR
 
+_submit = False
 # _submit = True
-_submit = True
 testnum = 30
 _step = 14
 _ahead = 60
@@ -68,14 +68,16 @@ def gbdrtrain(x, y, pre_x):
 	return pred
 
 
-def predict(ts, step):
+def predict(ts, collect, down, step):
 	if not _submit:
 		aheadnum = testnum
 	else:
 		aheadnum = _ahead
 	prediction = np.zeros(aheadnum)
 	for i in range(aheadnum):
-		x, y, x_pre = genfeature(ts, step+i)
+		# x, y, x_pre = genfeature(ts, step+i)
+		x, y, x_pre = genmutilfeature(ts, down, collect, step+i, step)
+		# pdb.set_trace()
 		m, n = x.shape
 		if not _submit:
 			xtrain = x[0 : m - testnum]
@@ -84,9 +86,16 @@ def predict(ts, step):
 		else:
 			xtrain = x
 			ytrain = y
-		# x_pre = np.array([x_pre])
-		# pre = xgbpredict(xtrain, ytrain, x_pre)
-		pre = gbdrtrain(xtrain, ytrain, x_pre)
+
+		x_pre = np.array([x_pre])
+
+		# xgboost
+		pre = xgbpredict(xtrain, ytrain, x_pre)
+
+		#gbdr
+		# ytrain = np.ravel(ytrain)
+		# pre = gbdrtrain(xtrain, ytrain, x_pre)
+
 		prediction[i] = pre
 		ts = np.concatenate((ts,pre), axis = 0)
 	if not _submit:
@@ -95,6 +104,44 @@ def predict(ts, step):
 		return f
 	else:
 		return prediction
+
+#only the play feature
+def predict_back(ts, step):
+	if not _submit:
+		aheadnum = testnum
+	else:
+		aheadnum = _ahead
+	prediction = np.zeros(aheadnum)
+	for i in range(aheadnum):
+		x, y, x_pre = genfeature(ts, step+i)
+		pdb.set_trace()
+		m, n = x.shape
+		if not _submit:
+			xtrain = x[0 : m - testnum]
+			ytrain = y[0 : m - testnum]
+			x_pre = x[m - testnum]
+		else:
+			xtrain = x
+			ytrain = y
+
+		x_pre = np.array([x_pre])
+
+		# xgboost
+		# pre = xgbpredict(xtrain, ytrain, x_pre)
+
+		#gbdr
+		ytrain = np.ravel(ytrain)
+		pre = gbdrtrain(xtrain, ytrain, x_pre)
+
+		prediction[i] = pre
+		ts = np.concatenate((ts,pre), axis = 0)
+	if not _submit:
+		yt = y[m - testnum: m].T[0]
+		f = score(yt, prediction)
+		return f
+	else:
+		return prediction
+
 
 
 
@@ -108,7 +155,8 @@ def submit():
 	for aid in art.id:
 		print "===============================================================>",count/float(len(art.id))
 		d = getdat(aid)
-		pre = predict(d[:, 0], _step)
+		pre = predict(d[:, 0], d[:, 1], d[:, 2], _step)
+		# pdb.set_trace()
 		if not _submit:
 			F += pre
 		else:
@@ -120,8 +168,9 @@ def submit():
 		# if count == 3:
 		# 	break
 	print F
-	now = time.strftime('%Y%m%d%H%M%S')
 	if _submit:
+		now = time.strftime('%Y%m%d%H%M%S')
+		subresult.pred = np.round(subresult.pred).astype(int)
 		subresult.to_csv('res/gbrt'+now+'.csv', header = False, index = False)
 
 if __name__ == '__main__':
