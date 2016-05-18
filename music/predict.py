@@ -4,30 +4,33 @@
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.cross_validation import train_test_split
-import matplotlib.pyplot as plt
 import pdb
 from sklearn import grid_search
 import xgboost as xgb
 from musicpro import *
 import time
 from sklearn.svm import SVR
+from sklearn.svm import NuSVR
+from sklearn import linear_model
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import SGDRegressor
+from sklearn.ensemble import RandomForestRegressor
 
-_submit = False
-# _submit = True
+# _submit = False
+_submit = True
 testnum = 30
-_step = 14
+_step = 28
 _ahead = 60
 
 
-def xgbpredict(x, y, x_pre):
-
+def xgbpredict(x, y, pre_x):
+	x, pre_x = datscater(x, pre_x)
 	xtrain, xvalid, ytrain, yvalid = train_test_split(x, y, test_size=0.2, random_state=0)
 
 	dtrain = xgb.DMatrix(xtrain, label = ytrain, missing = -1)
 	dvalid = xgb.DMatrix(xvalid, label = yvalid, missing = -1)
-	dpre = xgb.DMatrix(x_pre)
+	dpre = xgb.DMatrix(pre_x)
 
 	param = {
 		'booster':'gbtree',
@@ -39,7 +42,7 @@ def xgbpredict(x, y, x_pre):
 		'colssample_bytree':0.8,
 		'eta':0.02,
 		'nthread':10,
-		'seed':200
+		'seed':400
 	}
 
 	watchlist = [ (dtrain,'train'), (dvalid,'val')]
@@ -62,11 +65,48 @@ def score(trust, pre):
 	f = (1-tho)*np.sqrt(sum(trust))
 	return f
 
+def datscater(x, pre_x):
+	scaler = StandardScaler()
+	scaler.fit(x)
+	X_train = scaler.transform(x)
+	X_test = scaler.transform(pre_x)
+	return X_train, X_test
+
+
 def gbdrtrain(x, y, pre_x):
-	clf = GradientBoostingRegressor(n_estimators=200,max_leaf_nodes =20, learning_rate=0.1,max_depth=6, random_state=400, loss='ls').fit(x, y)
+	x, pre_x = datscater(x, pre_x)
+	clf = GradientBoostingRegressor(n_estimators=300,max_leaf_nodes =20, learning_rate=0.1,max_depth=6, random_state=400, loss='ls').fit(x, y)
 	pred = clf.predict(pre_x)
 	return pred
 
+def svntrain(x, y, pre_x):
+	x, pre_x = datscater(x, pre_x)
+	clf = SVR().fit(x, y)
+	pred = clf.predict(pre_x)
+	return pred
+
+def bayesiantrain(x, y, pre_x):
+	clf = linear_model.BayesianRidge().fit(x, y)
+	pred = clf.predict(pre_x)
+	return pred
+
+def LassoLarstrain(x, y, pre_x):
+	x, pre_x = datscater(x, pre_x)
+	clf = linear_model.LassoLars().fit(x, y)
+	pred = clf.predict(pre_x)
+	return pred
+
+def nusvrtrain(x, y, pre_x):
+	x, pre_x = datscater(x, pre_x)
+	clf = NuSVR(C = 5.0).fit(x, y)
+	pred = clf.predict(pre_x)
+	return pred
+
+def rfrtrain(x, y, pre_x):
+	x, pre_x = datscater(x, pre_x)
+	clf = RandomForestRegressor(n_estimators=300,max_leaf_nodes =20, max_depth=6, random_state=400).fit(x, y)
+	pred = clf.predict(pre_x)
+	return pred
 
 def predict(ts, collect, down, step):
 	if not _submit:
@@ -90,12 +130,24 @@ def predict(ts, collect, down, step):
 		x_pre = np.array([x_pre])
 
 		# xgboost
-		pre = xgbpredict(xtrain, ytrain, x_pre)
+		# pre = xgbpredict(xtrain, ytrain, x_pre)
 
 		#gbdr
 		# ytrain = np.ravel(ytrain)
 		# pre = gbdrtrain(xtrain, ytrain, x_pre)
 
+		#svn
+		# ytrain = np.ravel(ytrain)
+		# pre = svntrain(xtrain, ytrain, x_pre)
+
+		#nusvr
+		# ytrain = np.ravel(ytrain)
+		# pre = nusvrtrain(xtrain, ytrain, x_pre)
+
+		#svn
+		ytrain = np.ravel(ytrain)
+		pre = rfrtrain(xtrain, ytrain, x_pre)
+		
 		prediction[i] = pre
 		ts = np.concatenate((ts,pre), axis = 0)
 	if not _submit:
@@ -142,9 +194,6 @@ def predict_back(ts, step):
 	else:
 		return prediction
 
-
-
-
 def submit():
 	art = getartist()
 	daterange = pd.period_range('20150901', '20151030', freq='D')
@@ -171,7 +220,7 @@ def submit():
 	if _submit:
 		now = time.strftime('%Y%m%d%H%M%S')
 		subresult.pred = np.round(subresult.pred).astype(int)
-		subresult.to_csv('res/gbrt'+now+'.csv', header = False, index = False)
+		subresult.to_csv('res/rfr'+now+'.csv', header = False, index = False)
 
 if __name__ == '__main__':
 	submit()
