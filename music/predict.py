@@ -17,8 +17,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import SGDRegressor
 from sklearn.ensemble import RandomForestRegressor
 
-_submit = False
-# _submit = True
+# _submit = False
+_submit = True
 testnum = 30
 _step = 28
 _ahead = 60
@@ -138,7 +138,7 @@ def predict(ts, collect, down, step):
 		x_pre = np.array([x_pre])
 
 		# xgboost
-		# pre = xgbpredict(xtrain, ytrain, x_pre)
+		pre = xgbpredict(xtrain, ytrain, x_pre)
 
 		#gbdr
 		# ytrain = np.ravel(ytrain)
@@ -146,9 +146,9 @@ def predict(ts, collect, down, step):
 		# print "gbdr"
 
 		#svn
-		ytrain = np.ravel(ytrain)
-		pre = svntrain(xtrain, ytrain, x_pre)
-		print "svn"
+		# ytrain = np.ravel(ytrain)
+		# pre = svntrain(xtrain, ytrain, x_pre)
+		# print "svn"
 
 		#nusvr
 		# ytrain = np.ravel(ytrain)
@@ -238,7 +238,7 @@ def submit():
 	if _submit:
 		now = time.strftime('%Y%m%d%H%M%S')
 		subresult.pred = np.round(subresult.pred).astype(int)
-		subresult.to_csv('res/rfr'+now+'.csv', header = False, index = False)
+		subresult.to_csv('res/xgb28'+now+'.csv', header = False, index = False)
 
 if __name__ == '__main__':
 	submit()
