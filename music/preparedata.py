@@ -90,26 +90,26 @@ if __name__ == '__main__':
 	# predat(table, artist)
 	# table = 'collect'
 	# predat(table, artist)
-	# statsplay(10)
+	statsplay(5)
 
-	preday = 30
-	ahead = 30
-	x, y = gempredat(preday, 'play','ffd47cf9cb66d226575336f0fa42ae25')
+	# preday = 30
+	# ahead = 30
+	# x, y = gempredat(preday, 'play','ffd47cf9cb66d226575336f0fa42ae25')
 
-	xtrain = x[0:120,:]
-	ytrain = y[0:120,0]
-	xtest = x[120:120+ahead, :]
-	ytest = y[120:120+ahead]
-	print xtest.shape
-	print ytest.shape
+	# xtrain = x[0:120,:]
+	# ytrain = y[0:120,0]
+	# xtest = x[120:120+ahead, :]
+	# ytest = y[120:120+ahead]
+	# print xtest.shape
+	# print ytest.shape
 
 
-	clf = GradientBoostingRegressor(n_estimators=10,max_leaf_nodes =20, learning_rate=0.1,max_depth=3, random_state=100, loss='ls').fit(xtrain, ytrain)
-	# pre = clf.predict(xtrain)
+	# clf = GradientBoostingRegressor(n_estimators=10,max_leaf_nodes =20, learning_rate=0.1,max_depth=3, random_state=100, loss='ls').fit(xtrain, ytrain)
+	# # pre = clf.predict(xtrain)
 
-	pre = predict(clf, xtest[0,:], ahead)
-	print pre
-	print np.mean(abs(pre - ytrain))
+	# pre = predict(clf, xtest[0,:], ahead)
+	# print pre
+	# print np.mean(abs(pre - ytrain))
 
 	# print ytrain
 

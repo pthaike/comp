@@ -48,6 +48,12 @@ def getdat(aid):
 			res[dc, t] = d.loc[i, 'down']
 	return res
 
+def gettopk(aid):
+	file = 'topk/play/' + aid + '.csv'
+	df = pd.read_csv(file, header = False)
+	return df.values
+
+
 def genfeature(ts, step):
 	n = len(ts)
 	x = np.zeros((n-step, step))
@@ -58,6 +64,8 @@ def genfeature(ts, step):
 	# pdb.set_trace()
 	x_pre = ts[n-step:n]
 	return x,y,x_pre
+
+
 
 '''
 add the feature of download and collect
@@ -80,11 +88,111 @@ def genmutilfeature(ts, down, collect, step, ostep):
 	x_pre = np.concatenate((x_pre, down[ndwon-ostep:ndwon], collect[ncoll-ostep:ncoll]), axis = 0)
 	return x, y, x_pre
 
+'''
+add the feature of download and collect
+step: ts before step size
+ostep: down and collect step size
+'''
+def genmutilfeaturemore(ts, down, collect, step, ostep):
+	n = len(ts)
+	fnum = 3
+	ndwon = len(down)
+	ncoll = len(collect)
+	x = np.zeros((n-step, step + 2 * ostep+fnum))
+	y = np.zeros((n-step, 1))
+	for i in range(n-step):
+		x[i, 0:step] = ts[i:i+step]
+		x[i, step:step+ostep] = down[i:i+ostep]
+		x[i, step+ostep:step+2*ostep] = collect[i:i+ostep]
+
+		x[i, step+2*ostep] = sum(ts[i:i+ostep/2])/float(sum(ts[i+ostep/2:i+ostep]))
+		x[i, step+2*ostep+1] = np.mean(ts[i:i+ostep])
+		x[i, step+2*ostep+2] = np.var(ts[i:i+ostep])
+
+		y[i, 0] = ts[i+step]
+	# pdb.set_trace()
+	x_pre = ts[n-step:n]
+	x_pre = np.concatenate((x_pre, down[ndwon-ostep:ndwon], collect[ncoll-ostep:ncoll],[sum(ts[n-step:n-step/2])/float(sum(ts[n-step/2:n]))]), axis = 0)
+	return x, y, x_pre
+
+def genmutilfeaturemoretopk(ts, down, collect, topk, step, ostep):
+	n = len(ts)
+	fnum = 3
+	ndwon = len(down)
+	ncoll = len(collect)
+	tm, tn = topk.shape
+	x = np.zeros((n-step, step+2*ostep+fnum+ostep))
+	y = np.zeros((n-step, 1))
+	for i in range(n-step):
+		x[i, 0:step] = ts[i:i+step]
+		x[i, step:step+ostep] = down[i:i+ostep]
+		x[i, step+ostep:step+2*ostep] = collect[i:i+ostep]
+
+		x[i, step+2*ostep] = sum(ts[i:i+ostep/2])/float(sum(ts[i+ostep/2:i+ostep]))
+		x[i, step+2*ostep+1] = np.mean(ts[i:i+ostep])
+		x[i, step+2*ostep+2] = np.var(ts[i:i+ostep])
+
+		tk = np.sum(topk[i:i+ostep], axis = 1)
+		x[i, step + 2 * ostep+fnum : step+3*ostep+fnum] = tk
+		# x[i, step + 2 * ostep+fnum : step+2*ostep+fnum + tn] = topk[i+ostep-3]
+		# x[i, step+2*ostep+fnum+tn : step+2*ostep+fnum+2*tn] = topk[i+ostep-2]
+		y[i, 0] = ts[i+step]
+	# pdb.set_trace()
+	x_pre = ts[n-step:n]
+	tk = np.sum(topk[tm-ostep:tm], axis = 1)
+	x_pre = np.concatenate((x_pre, down[ndwon-ostep:ndwon], collect[ncoll-ostep:ncoll], [sum(ts[n-step:n-step/2])/float(sum(ts[n-step/2:n]))], [np.mean(ts[n-step:n])], [np.var(ts[n-step:n])], tk), axis = 0)
+	return x, y, x_pre
+
+# def genmutilfeaturemoretopk(ts, down, collect, topk, step, ostep):
+# 	n = len(ts)
+# 	fnum = 3
+# 	ndwon = len(down)
+# 	ncoll = len(collect)
+# 	tm, tn = topk.shape
+# 	x = np.zeros((n-step, step+2*ostep+fnum+tn*2))
+# 	y = np.zeros((n-step, 1))
+# 	for i in range(n-step):
+# 		x[i, 0:step] = ts[i:i+step]
+# 		x[i, step:step+ostep] = down[i:i+ostep]
+# 		x[i, step+ostep:step+2*ostep] = collect[i:i+ostep]
+
+# 		x[i, step+2*ostep] = sum(ts[i:i+ostep/2])/float(sum(ts[i+ostep/2:i+ostep]))
+# 		x[i, step+2*ostep+1] = np.mean(ts[i:i+ostep])
+# 		x[i, step+2*ostep+2] = np.var(ts[i:i+ostep])
+
+# 		x[i, step + 2 * ostep+fnum : step+2*ostep+fnum + tn] = topk[i+ostep-3]
+# 		x[i, step+2*ostep+fnum+tn : step+2*ostep+fnum+2*tn] = topk[i+ostep-2]
+# 		y[i, 0] = ts[i+step]
+# 	# pdb.set_trace()
+# 	x_pre = ts[n-step:n]
+# 	x_pre = np.concatenate((x_pre, down[ndwon-ostep:ndwon], collect[ncoll-ostep:ncoll], [sum(ts[n-step:n-step/2])/float(sum(ts[n-step/2:n]))], topk[tm-2], topk[tm-1]), axis = 0)
+# 	return x, y, x_pre
+
+
+
+def plotdat():
+	art = getartist()
+	daterange = pd.period_range('20150301', '20150830', freq='D')
+	date = [d for d in daterange]
+	for aid in art.id:
+		# file = 'allplay/play/'+aid+'.csv'
+		# d = pd.read_csv(file)
+		d = getdat(aid)
+		df = pd.DataFrame(d, index = date, columns = ['play', 'collect', 'download'])
+		plt.figure
+		df.plot()
+		plt.title(aid)
+		print aid
+		plt.show()
 
 if __name__ == '__main__':
 	# getsonginfo()
 	# print getartist()
-	
-	d = getdat('3e395c6b799d3d8cb7cd501b4503b536')
-	x,y,x_pre = genfeature(d[:,0], 14)
-	print x,y,x_pre
+	aid = '3e395c6b799d3d8cb7cd501b4503b536'
+	# d = getdat(aid)
+	# x,y,x_pre = genfeature(d[:,0], 14)
+	# print x,y,x_pre
+
+	# plotdat()
+
+	print gettopk(aid)

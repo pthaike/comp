@@ -32,16 +32,16 @@ class TimeSeriesNnet(object):
 		self.scaler = StandardScaler()
 		self.verbose = verbose
 
-		print "Building regressor matrix"
+		# print "Building regressor matrix"
 		# Building X matrix
 		for i in range(0, self.n - lag):
 			self.X[i, :] = self.timeseries[range(i, i + lag)]
 		# pdb.set_trace()
-		print "Scaling data"
+		# print "Scaling data"
 		self.scaler.fit(self.X)
 		self.X = self.scaler.transform(self.X)
 
-		print "Checking network consistency"
+		# print "Checking network consistency"
 		# Neural net architecture
 		self.nn = Sequential()
 		self.nn.add(Dense(self.hidden_layers[0], input_shape = (self.X.shape[1],)))
@@ -57,7 +57,7 @@ class TimeSeriesNnet(object):
 		self.nn.add(Activation('linear'))
 		self.nn.compile(loss = self.loss, optimizer = self.optimizer)
 
-		print "Training neural net"
+		# print "Training neural net"
 		# Train neural net
 		self.nn.fit(self.X, self.y, nb_epoch = self.epochs, verbose = self.verbose)
 

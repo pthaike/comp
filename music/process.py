@@ -168,7 +168,7 @@ if __name__ == '__main__':
 	# file = '023406156015ef87f99521f3b343f71f.csv'
 	# file = '25739ad1c56a511fcac86018ac4e49bb.csv'
 	# file = '25739ad1c56a511fcac86018ac4e49bb.csv'
-	file = '445a257964b9689f115a69e8cc5dcb75.csv'
+	file = 'allplay/play/445a257964b9689f115a69e8cc5dcb75.csv'
 	# # file = '5e2ef5473cbbdb335f6d51dc57845437.csv'
 	data = readtimeseries(file)
 
@@ -183,7 +183,7 @@ if __name__ == '__main__':
 	# plt.show()
 
 
-	# stationarity_test(data)
+	stationarity_test(data)
 
 	
 
@@ -198,4 +198,4 @@ if __name__ == '__main__':
 	# stationarity_test(data)
 	# acf_pacf(data)
 
-	arimamodel(data)
+	# arimamodel(data)

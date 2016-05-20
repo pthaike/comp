@@ -16,11 +16,13 @@ from sklearn import linear_model
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import SGDRegressor
 from sklearn.ensemble import RandomForestRegressor
+from libnnet import *
+from sklearn.feature_selection import SelectFromModel
 
-# _submit = False
-_submit = True
-testnum = 30
-_step = 28
+_submit = False
+# _submit = True
+testnum = 60
+_step = 14
 _ahead = 60
 
 
@@ -37,7 +39,6 @@ def xgbpredict(x, y, pre_x):
 		'objective':'reg:linear',
 		'early_stopping_rounds':500,
 		'max_depth':6,
-		'subsample':0.7,
 		'silent' : 1,
 		'colssample_bytree':0.8,
 		'eta':0.02,
@@ -46,7 +47,7 @@ def xgbpredict(x, y, pre_x):
 	}
 
 	watchlist = [ (dtrain,'train'), (dvalid,'val')]
-	model = xgb.train(param, dtrain, num_boost_round=1000, evals=watchlist)
+	model = xgb.train(param, dtrain, num_boost_round=500, evals=watchlist)
 
 	# model.save_model('xgb.model')
 	print 'predict....'
@@ -57,12 +58,33 @@ def xgbpredict(x, y, pre_x):
 
 def score(trust, pre):
 	e = trust - pre
+	# pdb.set_trace()
 	summ = 0
-	for i in range(len(trust)):
+	for i in range(trust.shape[0]):
+		# pdb.set_trace()
+		if trust[i] == 0:
+			continue
 		s = (e[i]/trust[i])**2
 		summ = summ + s
+	# pdb.set_trace()
 	tho = np.sqrt(summ/len(trust))
 	f = (1-tho)*np.sqrt(sum(trust))
+	if f < 0:
+		# pdb.set_trace()
+		print f
+		print trust
+		pre = np.ones(pre.shape)
+		e = trust - pre
+		summ = 0
+		for i in range(trust.shape[0]):
+			# pdb.set_trace()
+			if trust[i] == 0:
+				continue
+			s = (e[i]/trust[i])**2
+			summ = summ + s
+		# pdb.set_trace()
+		tho = np.sqrt(summ/len(trust))
+		f = (1-tho)*np.sqrt(sum(trust))
 	return f
 
 def datscater(x, pre_x):
@@ -75,9 +97,44 @@ def datscater(x, pre_x):
 
 def gbdrtrain(x, y, pre_x):
 	x, pre_x = datscater(x, pre_x)
-	clf = GradientBoostingRegressor(n_estimators=300,max_leaf_nodes =20, learning_rate=0.1,max_depth=6, random_state=400, loss='ls').fit(x, y)
+	clf = GradientBoostingRegressor(n_estimators=740, min_samples_leaf = 0.8, min_samples_split = 40, learning_rate=0.1,max_depth=7, random_state=400, loss='huber').fit(x, y)
+	# clf = GradientBoostingRegressor(n_estimators=200,max_leaf_nodes =20, learning_rate=0.1,max_depth=6, random_state=400, loss='ls').fit(x, y)
+
 	pred = clf.predict(pre_x)
 	return pred
+
+def paramselect(x, y, pre_x):
+	#740
+	# param_test1 = {'n_estimators':range(600,800,5)}
+	# gsearch1 = grid_search.GridSearchCV(estimator=
+	# 	GradientBoostingRegressor(learning_rate=0.1,min_samples_split=20,
+	# 		min_samples_leaf=50,max_depth=6,max_features='sqrt',
+	# 		subsample=0.8,random_state=200),
+	# 	param_grid=param_test1, scoring='mean_squared_error',iid=False,cv=5)
+
+	#40,7
+	# param_test2 = {'max_depth':range(7,12,1), 'min_samples_split':range(30,100,10)}
+	# gsearch2 = grid_search.GridSearchCV(estimator = 
+	# 	GradientBoostingRegressor(learning_rate = 0.1, n_estimators = 740, max_features = 'sqrt', subsample=0.8, random_state=200),
+	# 	param_grid=param_test2, scoring='mean_squared_error', iid=False, cv=5)
+	# clf = gsearch2
+
+	#test min_samples_leaf 30
+	# param_test3 = {'min_samples_leaf':range(20,210,5)}
+	# gsearch3 = grid_search.GridSearchCV(estimator = 
+	# 	GradientBoostingRegressor(learning_rate = 0.1, n_estimators = 740, max_depth=7, min_samples_split=40, max_features = 'sqrt', subsample=0.8, random_state=200),
+	# 	param_grid=param_test3, scoring='mean_squared_error', iid=False, cv=5)
+	# clf = gsearch3
+
+	#0.8
+	param_test5 = {'subsample':[0.6, 0.7, 0.8,0.9]}
+	gsearch5 = grid_search.GridSearchCV(estimator = 
+		GradientBoostingRegressor(learning_rate = 0.1, min_samples_leaf = 30, n_estimators = 740, max_depth=7, min_samples_split=40, random_state=200),
+		param_grid=param_test5, scoring='mean_squared_error', iid=False, cv=5)
+	clf = gsearch5
+
+	clf = clf.fit(x, y)
+	print clf.grid_scores_,'\n', clf.best_params_, clf.best_score_
 
 def svntrain(x, y, pre_x):
 	x, pre_x = datscater(x, pre_x)
@@ -105,26 +162,50 @@ def nusvrtrain(x, y, pre_x):
 
 def rfrtrain(x, y, pre_x):
 	x, pre_x = datscater(x, pre_x)
-	clf = RandomForestRegressor(n_estimators=300,max_leaf_nodes =20, max_depth=6, random_state=400).fit(x, y)
+	# clf = RandomForestRegressor(n_estimators=740,max_leaf_nodes =20, min_samples_leaf = 30, min_samples_split=40, max_depth=7, random_state=400, n_jobs = 6).fit(x, y)
+	clf = RandomForestRegressor(n_estimators=200,max_leaf_nodes =20, max_depth=6, random_state=400, n_jobs = 6).fit(x, y)
+
+	# clf = RandomForestRegressor(n_estimators=300,max_leaf_nodes =20, max_depth=6, random_state=400).fit(x, y)
 	pred = clf.predict(pre_x)
 	return pred
 
 def voting(xtrain, y, x_pre):
 	ytrain = np.ravel(y)
-	pre = 0.2*xgbpredict(xtrain, ytrain, x_pre) + 0.2*svntrain(xtrain, ytrain, x_pre) + 0.1*gbdrtrain(xtrain, ytrain, x_pre) + 0.2*nusvrtrain(xtrain, ytrain, x_pre) + 0.2*rfrtrain(xtrain, ytrain, x_pre) + 0.05*LassoLarstrain(xtrain, ytrain, x_pre) + 0.05*bayesiantrain(xtrain, ytrain, x_pre)
+	pre = 0.3*xgbpredict(xtrain, ytrain, x_pre) + 0.3*rfrtrain(xtrain, ytrain, x_pre) + 0.1*LassoLarstrain(xtrain, ytrain, x_pre) + 0.1*bayesiantrain(xtrain, ytrain, x_pre) + 0.1*gbdrtrain(xtrain, ytrain, x_pre) + 0.1*nusvrtrain(xtrain, ytrain, x_pre)
 	return pre
-	
+
+def extratrees(x, y, pre_x):
+	x, pre_x = datscater(x, pre_x)
+	clf = RandomForestRegressor(n_estimators=200,max_leaf_nodes =20, max_depth=6, random_state=400).fit(x, y)
+	# clf = RandomForestRegressor(n_estimators=300,max_leaf_nodes =20, max_depth=6, random_state=400).fit(x, y)
+	pred = clf.predict(pre_x)
+	print clf.feature_importances_
+	return pred
+
+def selectfeature(x, y, x_pre):
+	x, x_pre = datscater(x, x_pre)
+	clf = linear_model.LassoLars().fit(x, y)
+	model = SelectFromModel(clf, prefit=True)
+	x_new = model.transform(x)
+	print 'x',x.shape
+	print x_new.shape
+	x_pre = model.transform(x_pre)
+	return x_new, x_pre
 
 
-def predict(ts, collect, down, step):
+def predict(ts, collect, down, topk, step):
+	# print "randomforest"
 	if not _submit:
 		aheadnum = testnum
 	else:
 		aheadnum = _ahead
+	# pdb.set_trace()
+	yt = ts[ts.shape[0] - testnum: ts.shape[0]]
 	prediction = np.zeros(aheadnum)
 	for i in range(aheadnum):
-		# x, y, x_pre = genfeature(ts, step+i)
-		x, y, x_pre = genmutilfeature(ts, down, collect, step+i, step)
+		x, y, x_pre = genmutilfeaturemoretopk(ts, down, collect, topk, step+i, step)
+		# x, y, x_pre = genmutilfeaturemore(ts, down, collect, step+i, step)
+		# x, y, x_pre = genmutilfeature(ts, down, collect, step+i, step)
 		# pdb.set_trace()
 		m, n = x.shape
 		if not _submit:
@@ -137,8 +218,96 @@ def predict(ts, collect, down, step):
 
 		x_pre = np.array([x_pre])
 
+		# xtrain, x_pre = selectfeature(xtrain, ytrain, x_pre)
+
 		# xgboost
-		pre = xgbpredict(xtrain, ytrain, x_pre)
+		# pre = xgbpredict(xtrain, ytrain, x_pre)
+		# print xgb
+
+		#gbdr
+		# ytrain = np.ravel(ytrain)
+		# pre = gbdrtrain(xtrain, ytrain, x_pre)
+		# print "gbdr huber"
+
+		#svn
+		# ytrain = np.ravel(ytrain)
+		# pre = svntrain(xtrain, ytrain, x_pre)
+		# print "svn"
+
+		#nusvr
+		# ytrain = np.ravel(ytrain)
+		# pre = nusvrtrain(xtrain, ytrain, x_pre)
+		# print "nusvr"
+
+		#randomforest
+		# ytrain = np.ravel(ytrain)
+		# pre = rfrtrain(xtrain, ytrain, x_pre)
+		# print "rfr"
+
+		#bayesiantrain
+		# ytrain = np.ravel(ytrain)
+		# pre = bayesiantrain(xtrain, ytrain, x_pre)
+
+		#LassoLarstrain
+		ytrain = np.ravel(ytrain)
+		pre = LassoLarstrain(xtrain, ytrain, x_pre)
+		
+		# voting
+		# pre = voting(xtrain, ytrain, x_pre)
+		# print "voting"
+
+		#extratrees
+		# ytrain = np.ravel(ytrain)
+		# pre = extratrees(xtrain, ytrain, x_pre)
+		# print "extratrees"
+
+
+		# ytrain = np.ravel(ytrain)
+		# paramselect(xtrain, ytrain, x_pre)
+		# pre = 0
+
+
+
+
+		prediction[i] = pre
+		ts = np.concatenate((ts,pre), axis = 0)
+	if not _submit:
+		# yt = y[m - testnum: m].T[0]
+		f = score(yt, prediction)
+		return f
+	else:
+		return prediction
+
+def predict_back2(ts, collect, down, step):
+	# print "randomforest,selectfeature"
+	if not _submit:
+		aheadnum = testnum
+	else:
+		aheadnum = _ahead
+	# pdb.set_trace()
+	yt = ts[ts.shape[0] - testnum: ts.shape[0]]
+	prediction = np.zeros(aheadnum)
+	for i in range(aheadnum):
+		x, y, x_pre = genmutilfeaturemore(ts, down, collect, step+i, step)
+		# x, y, x_pre = genmutilfeaturemore(ts, down, collect, step+i, step)
+		# x, y, x_pre = genmutilfeature(ts, down, collect, step+i, step)
+		# pdb.set_trace()
+		m, n = x.shape
+		if not _submit:
+			xtrain = x[0 : m - testnum]
+			ytrain = y[0 : m - testnum]
+			x_pre = x[m - testnum]
+		else:
+			xtrain = x
+			ytrain = y
+
+		x_pre = np.array([x_pre])
+
+		# xtrain, x_pre = selectfeature(xtrain, ytrain, x_pre)
+
+		# xgboost
+		# pre = xgbpredict(xtrain, ytrain, x_pre)
+		# print xgb
 
 		#gbdr
 		# ytrain = np.ravel(ytrain)
@@ -159,15 +328,64 @@ def predict(ts, collect, down, step):
 		# ytrain = np.ravel(ytrain)
 		# pre = rfrtrain(xtrain, ytrain, x_pre)
 		# print "rfr"
+
+		#bayesiantrain
+		# ytrain = np.ravel(ytrain)
+		# pre = bayesiantrain(xtrain, ytrain, x_pre)
+
+		#LassoLarstrain
+		# ytrain = np.ravel(ytrain)
+		# pre = LassoLarstrain(xtrain, ytrain, x_pre)
 		
 		# voting
 		# pre = voting(xtrain, ytrain, x_pre)
 		# print "voting"
 
+		#extratrees
+		# ytrain = np.ravel(ytrain)
+		# pre = extratrees(xtrain, ytrain, x_pre)
+		# print "extratrees"
+
+
+
+
+
 		prediction[i] = pre
 		ts = np.concatenate((ts,pre), axis = 0)
 	if not _submit:
-		yt = y[m - testnum: m].T[0]
+		# yt = y[m - testnum: m].T[0]
+		f = score(yt, prediction)
+		return f
+	else:
+		return prediction
+
+
+
+def netpredict(ts, step):
+	print "nnet"
+	if not _submit:
+		aheadnum = testnum
+	else:
+		aheadnum = _ahead
+	yt = ts[ts.shape[0] - testnum: ts.shape[0]]
+	m = ts.shape[0]
+	lag = 40
+	if not _submit:
+		ts = ts[0 : m - testnum]
+	prediction = np.zeros(aheadnum)
+	for i in range(aheadnum/15):
+		# pdb.set_trace()
+		# nnet
+		neural_net = TimeSeriesNnet(hidden_layers = [20,15, 5], activation_functions = ['sigmoid', 'sigmoid', 'sigmoid'])
+		neural_net.fit(ts, lag = lag+i*15, epochs = 10000)
+		neural_net.predict_ahead(n_ahead = 15)
+		pre = neural_net.predictions
+		# pdb.set_trace()
+		prediction[i*15:i*15+15] = pre
+		ts = np.concatenate((ts,pre), axis = 0)
+	print prediction
+	print yt
+	if not _submit:
 		f = score(yt, prediction)
 		return f
 	else:
@@ -175,7 +393,7 @@ def predict(ts, collect, down, step):
 
 
 #only the play feature
-def predict_back(ts, step):
+def predict_back1(ts, step):
 	if not _submit:
 		aheadnum = testnum
 	else:
@@ -221,11 +439,17 @@ def submit():
 	for aid in art.id:
 		print "===============================================================>",count/float(len(art.id))
 		d = getdat(aid)
-		pre = predict(d[:, 0], d[:, 1], d[:, 2], _step)
+		topk = gettopk(aid)
+		# pre = predict(d[:, 0], d[:, 1], d[:, 2], topk, _step)
+		# pre = predict_back2(d[:, 0], d[:, 1], d[:, 2], _step)
+		pre = netpredict(d[:, 0], _step)
 		# pdb.set_trace()
+		
 		if not _submit:
 			F += pre
 		else:
+			if aid == '2b7fedeea967becd9408b896de8ff903':
+				pre = np.ones(pre.shape) 
 			dat = pd.DataFrame([aid]*_ahead, columns = ['id'])
 			dat['pred'] = pre
 			dat['time'] = date
@@ -233,12 +457,17 @@ def submit():
 		count += 1
 		# if count == 3:
 		# 	break
+		print aid
+		print pre
 		print F
 	print F
 	if _submit:
 		now = time.strftime('%Y%m%d%H%M%S')
 		subresult.pred = np.round(subresult.pred).astype(int)
-		subresult.to_csv('res/xgb28'+now+'.csv', header = False, index = False)
+		subresult.to_csv('res/voting6_'+now+'.csv', header = False, index = False)
 
 if __name__ == '__main__':
 	submit()
+	print _step
+	# print "xgb"
+	# print "pre = 0.3*xgbpredict(xtrain, ytrain, x_pre) + 0.3*rfrtrain(xtrain, ytrain, x_pre) + 0.1*LassoLarstrain(xtrain, ytrain, x_pre) + 0.1*bayesiantrain(xtrain, ytrain, x_pre) + 0.1*gbdrtrain(xtrain, ytrain, x_pre) + 0.1*nusvrtrain(xtrain, ytrain, x_pre)"
