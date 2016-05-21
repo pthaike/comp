@@ -88,32 +88,65 @@ def genmutilfeature(ts, down, collect, step, ostep):
 	x_pre = np.concatenate((x_pre, down[ndwon-ostep:ndwon], collect[ncoll-ostep:ncoll]), axis = 0)
 	return x, y, x_pre
 
-'''
-add the feature of download and collect
-step: ts before step size
-ostep: down and collect step size
-'''
+#0521
 def genmutilfeaturemore(ts, down, collect, step, ostep):
 	n = len(ts)
 	fnum = 3
 	ndwon = len(down)
 	ncoll = len(collect)
-	x = np.zeros((n-step, step + 2 * ostep+fnum))
+	x = np.zeros((n-step, step*2+fnum-1))
 	y = np.zeros((n-step, 1))
 	for i in range(n-step):
-		x[i, 0:step] = ts[i:i+step]
-		x[i, step:step+ostep] = down[i:i+ostep]
-		x[i, step+ostep:step+2*ostep] = collect[i:i+ostep]
+		tend = np.diff(ts[i:i+step])
+		a = np.concatenate((ts[i:i+step], [sum(ts[i:i+ostep/2])/float(sum(ts[i+ostep/2:i+ostep]))], [np.mean(ts[i:i+ostep])], [np.var(ts[i:i+ostep])], tend), axis = 0)
+		# x[i, 0:step] = ts[i:i+step]
 
-		x[i, step+2*ostep] = sum(ts[i:i+ostep/2])/float(sum(ts[i+ostep/2:i+ostep]))
-		x[i, step+2*ostep+1] = np.mean(ts[i:i+ostep])
-		x[i, step+2*ostep+2] = np.var(ts[i:i+ostep])
-
+		# x[i, step+2*ostep] = sum(ts[i:i+ostep/2])/float(sum(ts[i+ostep/2:i+ostep]))
+		# x[i, step+2*ostep+1] = np.mean(ts[i:i+ostep])
+		# x[i, step+2*ostep+2] = np.var(ts[i:i+ostep])
+		x[i] = a
 		y[i, 0] = ts[i+step]
 	# pdb.set_trace()
-	x_pre = ts[n-step:n]
-	x_pre = np.concatenate((x_pre, down[ndwon-ostep:ndwon], collect[ncoll-ostep:ncoll],[sum(ts[n-step:n-step/2])/float(sum(ts[n-step/2:n]))]), axis = 0)
+	x_pre = np.concatenate(( ts[n-step:n], [sum(ts[n-step:n-step/2])/float(sum(ts[n-step/2:n]))], [np.mean(ts[n-step:n])], [np.var(ts[n-step:n])], np.diff(ts[n-step:n])), axis = 0)
 	return x, y, x_pre
+
+'''
+add the feature of download and collect
+step: ts before step size
+ostep: down and collect step size
+'''
+# def genmutilfeaturemore(ts, down, collect, step, ostep):
+# 	n = len(ts)
+# 	fnum = 3
+# 	ndwon = len(down)
+# 	ncoll = len(collect)
+# 	x = np.zeros((n-step, step + 2 * ostep+fnum))
+# 	y = np.zeros((n-step, 1))
+# 	for i in range(n-step):
+# 		x[i, 0:step] = ts[i:i+step]
+# 		x[i, step:step+ostep] = down[i:i+ostep]
+# 		x[i, step+ostep:step+2*ostep] = collect[i:i+ostep]
+
+# 		x[i, step+2*ostep] = sum(ts[i:i+ostep/2])/float(sum(ts[i+ostep/2:i+ostep]))
+# 		x[i, step+2*ostep+1] = np.mean(ts[i:i+ostep])
+# 		x[i, step+2*ostep+2] = np.var(ts[i:i+ostep])
+
+# 		y[i, 0] = ts[i+step]
+# 	# pdb.set_trace()
+# 	x_pre = ts[n-step:n]
+# 	x_pre = np.concatenate((x_pre, down[ndwon-ostep:ndwon], collect[ncoll-ostep:ncoll],[sum(ts[n-step:n-step/2])/float(sum(ts[n-step/2:n]))]), axis = 0)
+# 	return x, y, x_pre
+
+
+
+
+
+# def trend(ts):
+
+# 	ts_log = np.log(ts)
+# 	ts_log_diff = ts_log - np.shift(ts_log)
+# 	# stationarity_test(ts_log_diff)
+# 	return ts_log, ts_log_diff
 
 def genmutilfeaturemoretopk(ts, down, collect, topk, step, ostep):
 	n = len(ts)
@@ -121,7 +154,7 @@ def genmutilfeaturemoretopk(ts, down, collect, topk, step, ostep):
 	ndwon = len(down)
 	ncoll = len(collect)
 	tm, tn = topk.shape
-	x = np.zeros((n-step, step+2*ostep+fnum+ostep))
+	x = np.zeros((n-step, 2*step+2*ostep+fnum+ostep-1))
 	y = np.zeros((n-step, 1))
 	for i in range(n-step):
 		x[i, 0:step] = ts[i:i+step]
@@ -134,14 +167,46 @@ def genmutilfeaturemoretopk(ts, down, collect, topk, step, ostep):
 
 		tk = np.sum(topk[i:i+ostep], axis = 1)
 		x[i, step + 2 * ostep+fnum : step+3*ostep+fnum] = tk
-		# x[i, step + 2 * ostep+fnum : step+2*ostep+fnum + tn] = topk[i+ostep-3]
-		# x[i, step+2*ostep+fnum+tn : step+2*ostep+fnum+2*tn] = topk[i+ostep-2]
+		# pdb.set_trace()
+		tend = np.diff(ts[i:i+step])
+		x[1, step+3*ostep+fnum: 2*step + 2*step+3*ostep+fnum-1] = tend
+
+
 		y[i, 0] = ts[i+step]
 	# pdb.set_trace()
 	x_pre = ts[n-step:n]
 	tk = np.sum(topk[tm-ostep:tm], axis = 1)
-	x_pre = np.concatenate((x_pre, down[ndwon-ostep:ndwon], collect[ncoll-ostep:ncoll], [sum(ts[n-step:n-step/2])/float(sum(ts[n-step/2:n]))], [np.mean(ts[n-step:n])], [np.var(ts[n-step:n])], tk), axis = 0)
+	x_pre = np.concatenate((x_pre, down[ndwon-ostep:ndwon], collect[ncoll-ostep:ncoll], [sum(ts[n-step:n-step/2])/float(sum(ts[n-step/2:n]))], [np.mean(ts[n-step:n])], [np.var(ts[n-step:n])], tk, np.diff(ts[n-step:n])), axis = 0)
 	return x, y, x_pre
+
+
+# def genmutilfeaturemoretopk(ts, down, collect, topk, step, ostep):
+# 	n = len(ts)
+# 	fnum = 3
+# 	ndwon = len(down)
+# 	ncoll = len(collect)
+# 	tm, tn = topk.shape
+# 	x = np.zeros((n-step, step+2*ostep+fnum+ostep))
+# 	y = np.zeros((n-step, 1))
+# 	for i in range(n-step):
+# 		x[i, 0:step] = ts[i:i+step]
+# 		x[i, step:step+ostep] = down[i:i+ostep]
+# 		x[i, step+ostep:step+2*ostep] = collect[i:i+ostep]
+
+# 		x[i, step+2*ostep] = sum(ts[i:i+ostep/2])/float(sum(ts[i+ostep/2:i+ostep]))
+# 		x[i, step+2*ostep+1] = np.mean(ts[i:i+ostep])
+# 		x[i, step+2*ostep+2] = np.var(ts[i:i+ostep])
+
+# 		tk = np.sum(topk[i:i+ostep], axis = 1)
+# 		x[i, step + 2 * ostep+fnum : step+3*ostep+fnum] = tk
+# 		# x[i, step + 2 * ostep+fnum : step+2*ostep+fnum + tn] = topk[i+ostep-3]
+# 		# x[i, step+2*ostep+fnum+tn : step+2*ostep+fnum+2*tn] = topk[i+ostep-2]
+# 		y[i, 0] = ts[i+step]
+# 	# pdb.set_trace()
+# 	x_pre = ts[n-step:n]
+# 	tk = np.sum(topk[tm-ostep:tm], axis = 1)
+# 	x_pre = np.concatenate((x_pre, down[ndwon-ostep:ndwon], collect[ncoll-ostep:ncoll], [sum(ts[n-step:n-step/2])/float(sum(ts[n-step/2:n]))], [np.mean(ts[n-step:n])], [np.var(ts[n-step:n])], tk), axis = 0)
+# 	return x, y, x_pre
 
 # def genmutilfeaturemoretopk(ts, down, collect, topk, step, ostep):
 # 	n = len(ts)

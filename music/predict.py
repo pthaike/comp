@@ -16,7 +16,7 @@ from sklearn import linear_model
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import SGDRegressor
 from sklearn.ensemble import RandomForestRegressor
-from libnnet import *
+# from libnnet import *
 from sklearn.feature_selection import SelectFromModel
 
 _submit = False
@@ -203,8 +203,8 @@ def predict(ts, collect, down, topk, step):
 	yt = ts[ts.shape[0] - testnum: ts.shape[0]]
 	prediction = np.zeros(aheadnum)
 	for i in range(aheadnum):
-		x, y, x_pre = genmutilfeaturemoretopk(ts, down, collect, topk, step+i, step)
-		# x, y, x_pre = genmutilfeaturemore(ts, down, collect, step+i, step)
+		# x, y, x_pre = genmutilfeaturemoretopk(ts, down, collect, topk, step+i, step)
+		x, y, x_pre = genmutilfeaturemore(ts, down, collect, step+i, step)
 		# x, y, x_pre = genmutilfeature(ts, down, collect, step+i, step)
 		# pdb.set_trace()
 		m, n = x.shape
@@ -240,8 +240,8 @@ def predict(ts, collect, down, topk, step):
 		# print "nusvr"
 
 		#randomforest
-		# ytrain = np.ravel(ytrain)
-		# pre = rfrtrain(xtrain, ytrain, x_pre)
+		ytrain = np.ravel(ytrain)
+		pre = rfrtrain(xtrain, ytrain, x_pre)
 		# print "rfr"
 
 		#bayesiantrain
@@ -249,8 +249,8 @@ def predict(ts, collect, down, topk, step):
 		# pre = bayesiantrain(xtrain, ytrain, x_pre)
 
 		#LassoLarstrain
-		ytrain = np.ravel(ytrain)
-		pre = LassoLarstrain(xtrain, ytrain, x_pre)
+		# ytrain = np.ravel(ytrain)
+		# pre = LassoLarstrain(xtrain, ytrain, x_pre)
 		
 		# voting
 		# pre = voting(xtrain, ytrain, x_pre)
@@ -301,7 +301,7 @@ def predict_back2(ts, collect, down, step):
 			xtrain = x
 			ytrain = y
 
-		x_pre = np.array([x_pre])
+		# x_pre = np.array([x_pre])
 
 		# xtrain, x_pre = selectfeature(xtrain, ytrain, x_pre)
 
@@ -325,8 +325,8 @@ def predict_back2(ts, collect, down, step):
 		# print "nusvr"
 
 		#randomforest
-		# ytrain = np.ravel(ytrain)
-		# pre = rfrtrain(xtrain, ytrain, x_pre)
+		ytrain = np.ravel(ytrain)
+		pre = rfrtrain(xtrain, ytrain, x_pre)
 		# print "rfr"
 
 		#bayesiantrain
@@ -440,9 +440,9 @@ def submit():
 		print "===============================================================>",count/float(len(art.id))
 		d = getdat(aid)
 		topk = gettopk(aid)
-		# pre = predict(d[:, 0], d[:, 1], d[:, 2], topk, _step)
+		pre = predict(d[:, 0], d[:, 1], d[:, 2], topk, _step)
 		# pre = predict_back2(d[:, 0], d[:, 1], d[:, 2], _step)
-		pre = netpredict(d[:, 0], _step)
+		# pre = netpredict(d[:, 0], _step)
 		# pdb.set_trace()
 		
 		if not _submit:
@@ -464,7 +464,7 @@ def submit():
 	if _submit:
 		now = time.strftime('%Y%m%d%H%M%S')
 		subresult.pred = np.round(subresult.pred).astype(int)
-		subresult.to_csv('res/voting6_'+now+'.csv', header = False, index = False)
+		subresult.to_csv('res/voting'+now+'.csv', header = False, index = False)
 
 if __name__ == '__main__':
 	submit()
