@@ -16,11 +16,11 @@ from sklearn import linear_model
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import SGDRegressor
 from sklearn.ensemble import RandomForestRegressor
-# from libnnet import *
+from libnnet import *
 from sklearn.feature_selection import SelectFromModel
 
-_submit = False
-# _submit = True
+# _submit = False
+_submit = True
 testnum = 60
 _step = 14
 _ahead = 60
@@ -203,8 +203,8 @@ def predict(ts, collect, down, topk, step):
 	yt = ts[ts.shape[0] - testnum: ts.shape[0]]
 	prediction = np.zeros(aheadnum)
 	for i in range(aheadnum):
-		# x, y, x_pre = genmutilfeaturemoretopk(ts, down, collect, topk, step+i, step)
-		x, y, x_pre = genmutilfeaturemore(ts, down, collect, step+i, step)
+		x, y, x_pre = genmutilfeaturemoretopk(ts, down, collect, topk, step+i, step)
+		# x, y, x_pre = genmutilfeaturemore(ts, down, collect, step+i, step)
 		# x, y, x_pre = genmutilfeature(ts, down, collect, step+i, step)
 		# pdb.set_trace()
 		m, n = x.shape
@@ -373,15 +373,15 @@ def netpredict(ts, step):
 	if not _submit:
 		ts = ts[0 : m - testnum]
 	prediction = np.zeros(aheadnum)
-	for i in range(aheadnum/15):
+	for i in range(aheadnum):
 		# pdb.set_trace()
 		# nnet
-		neural_net = TimeSeriesNnet(hidden_layers = [20,15, 5], activation_functions = ['sigmoid', 'sigmoid', 'sigmoid'])
-		neural_net.fit(ts, lag = lag+i*15, epochs = 10000)
-		neural_net.predict_ahead(n_ahead = 15)
+		neural_net = TimeSeriesNnet(hidden_layers = [20,15, 5], activation_functions = ['sigmoid', 'relu', 'softmax'])
+		neural_net.fit(ts, lag = lag+i, epochs = 1000)
+		neural_net.predict_ahead(n_ahead = 1)
 		pre = neural_net.predictions
 		# pdb.set_trace()
-		prediction[i*15:i*15+15] = pre
+		prediction[i] = pre
 		ts = np.concatenate((ts,pre), axis = 0)
 	print prediction
 	print yt
@@ -464,7 +464,7 @@ def submit():
 	if _submit:
 		now = time.strftime('%Y%m%d%H%M%S')
 		subresult.pred = np.round(subresult.pred).astype(int)
-		subresult.to_csv('res/voting'+now+'.csv', header = False, index = False)
+		subresult.to_csv('res/rfr'+now+'.csv', header = False, index = False)
 
 if __name__ == '__main__':
 	submit()
