@@ -16,7 +16,7 @@ from sklearn import linear_model
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import SGDRegressor
 from sklearn.ensemble import RandomForestRegressor
-from libnnet import *
+# from libnnet import *
 from sklearn.feature_selection import SelectFromModel
 
 # _submit = False
@@ -240,8 +240,8 @@ def predict(ts, collect, down, topk, step):
 		# print "nusvr"
 
 		#randomforest
-		ytrain = np.ravel(ytrain)
-		pre = rfrtrain(xtrain, ytrain, x_pre)
+		# ytrain = np.ravel(ytrain)
+		# pre = rfrtrain(xtrain, ytrain, x_pre)
 		# print "rfr"
 
 		#bayesiantrain
@@ -253,8 +253,8 @@ def predict(ts, collect, down, topk, step):
 		# pre = LassoLarstrain(xtrain, ytrain, x_pre)
 		
 		# voting
-		# pre = voting(xtrain, ytrain, x_pre)
-		# print "voting"
+		pre = voting(xtrain, ytrain, x_pre)
+		print "voting"
 
 		#extratrees
 		# ytrain = np.ravel(ytrain)
@@ -464,7 +464,7 @@ def submit():
 	if _submit:
 		now = time.strftime('%Y%m%d%H%M%S')
 		subresult.pred = np.round(subresult.pred).astype(int)
-		subresult.to_csv('res/rfr'+now+'.csv', header = False, index = False)
+		subresult.to_csv('res/voting'+now+'.csv', header = False, index = False)
 
 if __name__ == '__main__':
 	submit()
