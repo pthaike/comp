@@ -89,53 +89,53 @@ def genmutilfeature(ts, down, collect, step, ostep):
 	return x, y, x_pre
 
 #0521
-def genmutilfeaturemore(ts, down, collect, step, ostep):
-	n = len(ts)
-	fnum = 3
-	ndwon = len(down)
-	ncoll = len(collect)
-	x = np.zeros((n-step, step*2+fnum-1))
-	y = np.zeros((n-step, 1))
-	for i in range(n-step):
-		tend = np.diff(ts[i:i+step])
-		a = np.concatenate((ts[i:i+step], [sum(ts[i:i+ostep/2])/float(sum(ts[i+ostep/2:i+ostep]))], [np.mean(ts[i:i+ostep])], [np.var(ts[i:i+ostep])], tend), axis = 0)
-		# x[i, 0:step] = ts[i:i+step]
+# def genmutilfeaturemore(ts, down, collect, step, ostep):
+# 	n = len(ts)
+# 	fnum = 3
+# 	ndwon = len(down)
+# 	ncoll = len(collect)
+# 	x = np.zeros((n-step, step*2+fnum-1))
+# 	y = np.zeros((n-step, 1))
+# 	for i in range(n-step):
+# 		tend = np.diff(ts[i:i+step])
+# 		a = np.concatenate((ts[i:i+step], [sum(ts[i:i+ostep/2])/float(sum(ts[i+ostep/2:i+ostep]))], [np.mean(ts[i:i+ostep])], [np.var(ts[i:i+ostep])], tend), axis = 0)
+# 		# x[i, 0:step] = ts[i:i+step]
 
-		# x[i, step+2*ostep] = sum(ts[i:i+ostep/2])/float(sum(ts[i+ostep/2:i+ostep]))
-		# x[i, step+2*ostep+1] = np.mean(ts[i:i+ostep])
-		# x[i, step+2*ostep+2] = np.var(ts[i:i+ostep])
-		x[i] = a
-		y[i, 0] = ts[i+step]
-	# pdb.set_trace()
-	x_pre = np.concatenate(( ts[n-step:n], [sum(ts[n-step:n-step/2])/float(sum(ts[n-step/2:n]))], [np.mean(ts[n-step:n])], [np.var(ts[n-step:n])], np.diff(ts[n-step:n])), axis = 0)
-	return x, y, x_pre
+# 		# x[i, step+2*ostep] = sum(ts[i:i+ostep/2])/float(sum(ts[i+ostep/2:i+ostep]))
+# 		# x[i, step+2*ostep+1] = np.mean(ts[i:i+ostep])
+# 		# x[i, step+2*ostep+2] = np.var(ts[i:i+ostep])
+# 		x[i] = a
+# 		y[i, 0] = ts[i+step]
+# 	# pdb.set_trace()
+# 	x_pre = np.concatenate(( ts[n-step:n], [sum(ts[n-step:n-step/2])/float(sum(ts[n-step/2:n]))], [np.mean(ts[n-step:n])], [np.var(ts[n-step:n])], np.diff(ts[n-step:n])), axis = 0)
+# 	return x, y, x_pre
 
 '''
 add the feature of download and collect
 step: ts before step size
 ostep: down and collect step size
 '''
-# def genmutilfeaturemore(ts, down, collect, step, ostep):
-# 	n = len(ts)
-# 	fnum = 3
-# 	ndwon = len(down)
-# 	ncoll = len(collect)
-# 	x = np.zeros((n-step, step + 2 * ostep+fnum))
-# 	y = np.zeros((n-step, 1))
-# 	for i in range(n-step):
-# 		x[i, 0:step] = ts[i:i+step]
-# 		x[i, step:step+ostep] = down[i:i+ostep]
-# 		x[i, step+ostep:step+2*ostep] = collect[i:i+ostep]
+def genmutilfeaturemore(ts, down, collect, step, ostep):
+	n = len(ts)
+	fnum = 3
+	ndwon = len(down)
+	ncoll = len(collect)
+	x = np.zeros((n-step, step + 2 * ostep+fnum))
+	y = np.zeros((n-step, 1))
+	for i in range(n-step):
+		x[i, 0:step] = ts[i:i+step]
+		x[i, step:step+ostep] = down[i:i+ostep]
+		x[i, step+ostep:step+2*ostep] = collect[i:i+ostep]
 
-# 		x[i, step+2*ostep] = sum(ts[i:i+ostep/2])/float(sum(ts[i+ostep/2:i+ostep]))
-# 		x[i, step+2*ostep+1] = np.mean(ts[i:i+ostep])
-# 		x[i, step+2*ostep+2] = np.var(ts[i:i+ostep])
+		x[i, step+2*ostep] = sum(ts[i:i+ostep/2])/float(sum(ts[i+ostep/2:i+ostep]))
+		x[i, step+2*ostep+1] = np.mean(ts[i:i+ostep])
+		x[i, step+2*ostep+2] = np.var(ts[i:i+ostep])
 
-# 		y[i, 0] = ts[i+step]
-# 	# pdb.set_trace()
-# 	x_pre = ts[n-step:n]
-# 	x_pre = np.concatenate((x_pre, down[ndwon-ostep:ndwon], collect[ncoll-ostep:ncoll],[sum(ts[n-step:n-step/2])/float(sum(ts[n-step/2:n]))]), axis = 0)
-# 	return x, y, x_pre
+		y[i, 0] = ts[i+step]
+	# pdb.set_trace()
+	x_pre = ts[n-step:n]
+	x_pre = np.concatenate((x_pre, down[ndwon-ostep:ndwon], collect[ncoll-ostep:ncoll],[sum(ts[n-step:n-step/2])/float(sum(ts[n-step/2:n]))], [np.mean(ts[n-step:n])], [np.var(ts[n-step:n])]), axis = 0)
+	return x, y, x_pre
 
 
 
