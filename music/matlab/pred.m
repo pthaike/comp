@@ -24,7 +24,7 @@ xmean = mean(down(end-30:end))*ones(60,1);
 dlogdown = diff(x);
 gddown = dlogdown;
 %Md = arima(2,1,1);
-Md = arima('Constant',0,'D',1,'Seasonality',7,'MALags',2,'SMALags',14);
+Md = arima('Constant',0,'D',1,'Seasonality',7,'MALags',3,'SMALags',7);
 Fit = estimate(Md,gddown);
 [YF,YMSE] = forecast(Fit,60,'Y0',gddown);	
 

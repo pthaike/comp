@@ -16,7 +16,7 @@ from sklearn import linear_model
 from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import SGDRegressor
 from sklearn.ensemble import RandomForestRegressor
-from libnnet import *
+# from libnnet import *
 from sklearn.feature_selection import SelectFromModel
 
 # _submit = False
