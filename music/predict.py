@@ -464,7 +464,7 @@ def submit():
 	if _submit:
 		now = time.strftime('%Y%m%d%H%M%S')
 		subresult.pred = np.round(subresult.pred).astype(int)
-		subresult.to_csv('res/voting'+now+'.csv', header = False, index = False)
+		subresult.to_csv('res/vote'+now+'.csv', header = False, index = False)
 
 if __name__ == '__main__':
 	submit()

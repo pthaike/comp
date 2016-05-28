@@ -3,7 +3,7 @@
 data <- read.csv('allplay/play/0c80008b0a28d356026f4b1097041689.csv', header = F, col.names =list('ind','id', 'plays', 'dates'))
 plays <- data$plays
 train <- data.frame(plays, row.names = data$dates)
-fit <- arima(train, order = c(0,1,1))
+fit <- arima(train, order = c(1,1,2))
 library(forecast)
 pre <- forecast(fit, 60)
 print(pre)
@@ -20,3 +20,9 @@ plays <- data$plays
 train <- data.frame(plays, row.names = data$dates)
 
 rrf <- randomForest(train, )
+
+
+tsplay = ts(train)
+playdiff=diff(tsplay,1)
+plot(playdiff,type="o")
+acf(playdiff,xlim=c(1,24))
