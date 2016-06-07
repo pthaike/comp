@@ -23,7 +23,8 @@ from sklearn.feature_selection import SelectFromModel
 _submit = True
 testnum = 60
 _step = 14
-_ahead = 60
+_ahead = 61
+_time = 30
 
 
 def xgbpredict(x, y, pre_x):
@@ -192,9 +193,9 @@ def selectfeature(x, y, x_pre):
 	x_pre = model.transform(x_pre)
 	return x_new, x_pre
 
-
-def predict(ts, collect, down, topk, step):
+def predict(ts, collect, down, topk, step, flag):
 	# print "randomforest"
+	print 'flag',flag
 	if not _submit:
 		aheadnum = testnum
 	else:
@@ -209,12 +210,12 @@ def predict(ts, collect, down, topk, step):
 		# pdb.set_trace()
 		m, n = x.shape
 		if not _submit:
-			xtrain = x[0 : m - testnum]
-			ytrain = y[0 : m - testnum]
+			xtrain = x[m - testnum - _time : m - testnum]
+			ytrain = y[m - testnum - _time : m - testnum]
 			x_pre = x[m - testnum]
 		else:
-			xtrain = x
-			ytrain = y
+			xtrain = x[m - _time:]
+			ytrain = y[m - _time:]
 
 		x_pre = np.array([x_pre])
 
@@ -253,8 +254,108 @@ def predict(ts, collect, down, topk, step):
 		# pre = LassoLarstrain(xtrain, ytrain, x_pre)
 		
 		# voting
-		pre = voting(xtrain, ytrain, x_pre)
-		print "voting"
+		# pre = voting(xtrain, ytrain, x_pre)
+		# print "voting"
+
+		#extratrees
+		# ytrain = np.ravel(ytrain)
+		# pre = extratrees(xtrain, ytrain, x_pre)
+		# print "extratrees"
+
+
+		# ytrain = np.ravel(ytrain)
+		# paramselect(xtrain, ytrain, x_pre)
+		# pre = 0
+
+		ytrain = np.ravel(ytrain)
+		
+		if flag == 1:
+			pre = rfrtrain(xtrain, ytrain, x_pre)
+		elif flag == 2:
+			pre = gbdrtrain(xtrain, ytrain, x_pre)
+		elif flag == 3:
+			pre = svntrain(xtrain, ytrain, x_pre)
+		elif flag == 4:
+			pre = LassoLarstrain(xtrain, ytrain, x_pre)
+		else:
+			pre = rfrtrain(xtrain, ytrain, x_pre)
+
+
+
+		prediction[i] = pre
+		ts = np.concatenate((ts,pre), axis = 0)
+	if not _submit:
+		# yt = y[m - testnum: m].T[0]
+		f = score(yt, prediction)
+		return f
+	else:
+		return prediction[1:]
+
+##20160531
+def predict_back3(ts, collect, down, topk, step):
+	# print "randomforest"
+	if not _submit:
+		aheadnum = testnum
+	else:
+		aheadnum = _ahead
+	# pdb.set_trace()
+	yt = ts[ts.shape[0] - testnum: ts.shape[0]]
+	prediction = np.zeros(aheadnum)
+	for i in range(aheadnum):
+		# x, y, x_pre = genmutilfeaturemoretopk(ts, down, collect, topk, step+i, step)
+		x, y, x_pre = genmutilfeaturemore(ts, down, collect, step+i, step)
+		# x, y, x_pre = genmutilfeature(ts, down, collect, step+i, step)
+		# pdb.set_trace()
+		m, n = x.shape
+		if not _submit:
+			xtrain = x[m - testnum - _time : m - testnum]
+			ytrain = y[m - testnum - _time : m - testnum]
+			x_pre = x[m - testnum]
+		else:
+			xtrain = x[m - _time:]
+			ytrain = y[m - _time:]
+
+		x_pre = np.array([x_pre])
+
+		# xtrain, x_pre = selectfeature(xtrain, ytrain, x_pre)
+
+		# xgboost
+		# pre1 = xgbpredict(xtrain, ytrain, x_pre)
+		# print xgb
+
+		#gbdr
+		# ytrain = np.ravel(ytrain)
+		# pre = gbdrtrain(xtrain, ytrain, x_pre)
+		# print "gbdr huber"
+
+		#svn
+		# ytrain = np.ravel(ytrain)
+		# pre = svntrain(xtrain, ytrain, x_pre)
+		# print "svn"
+
+		#nusvr
+		# ytrain = np.ravel(ytrain)
+		# pre = nusvrtrain(xtrain, ytrain, x_pre)
+		# print "nusvr"
+
+		#randomforest
+		ytrain = np.ravel(ytrain)
+		pre = rfrtrain(xtrain, ytrain, x_pre)
+
+		# pre = 0.4 * pre1 + 0.6 * pre2;
+		# print "rfr"
+
+		#bayesiantrain
+		# ytrain = np.ravel(ytrain)
+		# pre = bayesiantrain(xtrain, ytrain, x_pre)
+
+		#LassoLarstrain
+		# ytrain = np.ravel(ytrain)
+		# pre = LassoLarstrain(xtrain, ytrain, x_pre)
+		
+		# voting
+		# pre = voting(xtrain, ytrain, x_pre)
+		# print "voting"
 
 		#extratrees
 		# ytrain = np.ravel(ytrain)
@@ -276,7 +377,7 @@ def predict(ts, collect, down, topk, step):
 		f = score(yt, prediction)
 		return f
 	else:
-		return prediction
+		return prediction[1:]
 
 def predict_back2(ts, collect, down, step):
 	# print "randomforest,selectfeature"
@@ -306,7 +407,7 @@ def predict_back2(ts, collect, down, step):
 		# xtrain, x_pre = selectfeature(xtrain, ytrain, x_pre)
 
 		# xgboost
-		# pre = xgbpredict(xtrain, ytrain, x_pre)
+		pre = xgbpredict(xtrain, ytrain, x_pre)
 		# print xgb
 
 		#gbdr
@@ -325,8 +426,8 @@ def predict_back2(ts, collect, down, step):
 		# print "nusvr"
 
 		#randomforest
-		ytrain = np.ravel(ytrain)
-		pre = rfrtrain(xtrain, ytrain, x_pre)
+		# ytrain = np.ravel(ytrain)
+		# pre = rfrtrain(xtrain, ytrain, x_pre)
 		# print "rfr"
 
 		#bayesiantrain
@@ -345,9 +446,6 @@ def predict_back2(ts, collect, down, step):
 		# ytrain = np.ravel(ytrain)
 		# pre = extratrees(xtrain, ytrain, x_pre)
 		# print "extratrees"
-
-
-
 
 
 		prediction[i] = pre
@@ -404,12 +502,12 @@ def predict_back1(ts, step):
 		pdb.set_trace()
 		m, n = x.shape
 		if not _submit:
-			xtrain = x[0 : m - testnum]
-			ytrain = y[0 : m - testnum]
+			xtrain = x[60 : m - testnum]
+			ytrain = y[60 : m - testnum]
 			x_pre = x[m - testnum]
 		else:
-			xtrain = x
-			ytrain = y
+			xtrain = x[120:]
+			ytrain = y[120:]
 
 		x_pre = np.array([x_pre])
 
@@ -435,12 +533,16 @@ def submit():
 	date = [d.strftime('%Y%m%d') for d in daterange]
 	subresult = pd.DataFrame()
 	F = 0
+	flag = getw()
 	count = 0
 	for aid in art.id:
 		print "===============================================================>",count/float(len(art.id))
 		d = getdat(aid)
 		topk = gettopk(aid)
-		pre = predict(d[:, 0], d[:, 1], d[:, 2], topk, _step)
+		# pre = predict(d[:, 0], d[:, 1], d[:, 2], topk, _step, flag.flag[count])
+		# pre = predict(d[:, 0], d[:, 1], d[:, 2], topk, _step)
+		pre = predict_back3(d[:, 0], d[:, 1], d[:, 2], topk, _step)
+		# pre = predict_back2(d[:, 0], d[:, 1], d[:, 2], topk, _step)
 		# pre = predict_back2(d[:, 0], d[:, 1], d[:, 2], _step)
 		# pre = netpredict(d[:, 0], _step)
 		# pdb.set_trace()
@@ -450,7 +552,7 @@ def submit():
 		else:
 			if aid == '2b7fedeea967becd9408b896de8ff903':
 				pre = np.ones(pre.shape) 
-			dat = pd.DataFrame([aid]*_ahead, columns = ['id'])
+			dat = pd.DataFrame([aid]*len(pre), columns = ['id'])
 			dat['pred'] = pre
 			dat['time'] = date
 			subresult = subresult.append(dat)
@@ -464,7 +566,7 @@ def submit():
 	if _submit:
 		now = time.strftime('%Y%m%d%H%M%S')
 		subresult.pred = np.round(subresult.pred).astype(int)
-		subresult.to_csv('res/vote'+now+'.csv', header = False, index = False)
+		subresult.to_csv('res/all'+now+'.csv', header = False, index = False)
 
 if __name__ == '__main__':
 	submit()

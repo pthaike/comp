@@ -250,6 +250,10 @@ def plotdat():
 		print aid
 		plt.show()
 
+def getw():
+	df = pd.read_csv('weight.txt', names = ['flag'])
+	return df
+
 if __name__ == '__main__':
 	# getsonginfo()
 	# print getartist()
