@@ -292,7 +292,7 @@ def predict(ts, collect, down, topk, step, flag):
 		return prediction[1:]
 
 ##20160531
-def predict_back3(ts, collect, down, topk, step):
+def predict_back3(ts, collect, down, step):
 	# print "randomforest"
 	if not _submit:
 		aheadnum = testnum
@@ -533,15 +533,15 @@ def submit():
 	date = [d.strftime('%Y%m%d') for d in daterange]
 	subresult = pd.DataFrame()
 	F = 0
-	flag = getw()
+	#flag = getw()
 	count = 0
 	for aid in art.id:
 		print "===============================================================>",count/float(len(art.id))
 		d = getdat(aid)
-		topk = gettopk(aid)
+		#topk = gettopk(aid)
 		# pre = predict(d[:, 0], d[:, 1], d[:, 2], topk, _step, flag.flag[count])
 		# pre = predict(d[:, 0], d[:, 1], d[:, 2], topk, _step)
-		pre = predict_back3(d[:, 0], d[:, 1], d[:, 2], topk, _step)
+		pre = predict_back3(d[:, 0], d[:, 1], d[:, 2], _step)
 		# pre = predict_back2(d[:, 0], d[:, 1], d[:, 2], topk, _step)
 		# pre = predict_back2(d[:, 0], d[:, 1], d[:, 2], _step)
 		# pre = netpredict(d[:, 0], _step)

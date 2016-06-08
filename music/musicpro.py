@@ -42,7 +42,7 @@ def getdat(aid):
 	res = np.zeros(((end-start).days+1, len(file)))
 	for t in range(len(file)):
 		d = pd.read_csv(file[t])
-		d.ds = pd.to_datetime(d.ds, format='%Y%m%d')
+		d.ds = pd.to_datetime(d.ds, format='%Y-%m-%d')
 		for i in d.index:
 			dc = (d.loc[i, 'ds']-start).days
 			res[dc, t] = d.loc[i, 'down']

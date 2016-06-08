@@ -11,7 +11,7 @@ import pdb
 # get artist list
 def getartist():
 	file = 'art.csv'
-	name = pd.read_csv(file, header=None, names = ['id','num'])
+	name = pd.read_csv(file, header=None, names = ['id'])
 	return name
 
 #save the data to local file
@@ -84,13 +84,15 @@ def predict(clf, x_pre, ahead):
 
 
 if __name__ == '__main__':
-	# artist = getartist()
-	# # table = 'play'
+	artist = getartist()
+	print artist
+	# table = 'play'
+	# predat(table, artist)
 	# table = 'download'
 	# predat(table, artist)
 	# table = 'collect'
 	# predat(table, artist)
-	statsplay(5)
+	# statsplay(5)
 
 	# preday = 30
 	# ahead = 30
